@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  contact_crud_app:
+    container_name: contact_crud_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - contact_crud_backend
+    depends_on:
+      - contact_crud_webserver
+      - contact_crud_database
+
+  contact_crud_webserver:
+    container_name: contact_crud_webserver
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+    networks:
+      - contact_crud_backend
+    env_file:
+      - .env
+
+  contact_crud_database:
+    container_name: contact_crud_database
+    image: mysql:5.7.41
+    restart: always
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'contact_crud_data:/var/lib/mysql'
+    networks:
+      - contact_crud_backend
+
+networks:
+  contact_crud_backend:
+    driver: bridge
+
+volumes:
+  contact_crud_data:
+    driver: local
+    
